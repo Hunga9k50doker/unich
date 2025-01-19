@@ -90,6 +90,46 @@ async function getRecentMining(token, proxy) {
   }
 }
 
+async function getRef(token, proxy) {
+  const agent = newAgent(proxy);
+  const url = "https://api.unich.com/airdrop/user/v1/ref";
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      agent: agent,
+    });
+    return response.data;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function addRef(token, proxy) {
+  const agent = newAgent(proxy);
+  const url = "https://api.unich.com/airdrop/user/v1/ref/refer-sign-up";
+
+  try {
+    const response = await axios.post(
+      url,
+      { code: "YL1FJT" },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        agent: agent,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return null;
+  }
+}
+
 async function claimSocialReward(token, taskId, proxy) {
   const agent = newAgent(proxy);
   const url = `https://api.unich.com/airdrop/user/v1/social/claim/${taskId}`;
@@ -123,6 +163,10 @@ async function start() {
   const accountsProcessing = tokens.map(async (token, index) => {
     const proxy = proxies[index % proxies.length];
     while (true) {
+      const refInfo = await getRef(token, proxy);
+      if (!refInfo?.data?.referred) {
+        await addRef(token, proxy);
+      }
       const recent = await getRecentMining(token, proxy);
       const isMining = recent?.data?.isMining;
       const balance = recent?.data?.mUn;
